@@ -9,7 +9,7 @@ class Board extends Component {
     let randomDataIndex = Math.floor(Math.random() * sudoku.data.length);
     this.randomDataIndex = randomDataIndex;
     this.state = this.initializeboardState(randomDataIndex);
-    this.state.hasHelp = false;
+    this.state.hasHelp = true;
   }
 
   initializeboardState(dataIndex) {
