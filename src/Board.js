@@ -14,12 +14,13 @@ class Board extends Component {
 
   initializeboardState(dataIndex) {
     if (dataIndex !== undefined) {
+      console.log("Sudoku", dataIndex, "loaded succesfully!");
       return {
         cells: sudoku.data[dataIndex].split("").map((c) => {
           return {
-            isActive: parseInt(c) > 0 ? true : false,
+            isActive: parseInt(c) > 0,
             value: parseInt(c),
-            isInitial: parseInt(c) > 0 ? true : false,
+            isInitial: parseInt(c) > 0,
             allowedNumbers: new Set(),
           };
         }),
@@ -31,7 +32,7 @@ class Board extends Component {
           isActive: false,
           value: 0,
           isInitial: false,
-          allowedNumbers: [...Array(10).keys()],
+          allowedNumbers: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
         };
       }),
     };
@@ -193,7 +194,13 @@ class Cell extends React.Component {
 
   render() {
     const numbers = [];
-
+    if (this.state.allowedNumbers.size === 0 && !this.state.isActive) {
+      return (
+        <div className={`Cell`}>
+          <Error></Error>
+        </div>
+      );
+    }
     for (let i = 0; i < 9; i++) {
       const isActive = this.state.value === i + 1;
       const isProtected = this.state.value === i + 1 && this.props.isInitial;
@@ -220,7 +227,13 @@ class Cell extends React.Component {
       );
     }
 
-    return <div className={`Cell`}>{numbers}</div>;
+    return <div className={`Cell GridCell`}>{numbers}</div>;
+  }
+}
+
+class Error extends React.Component {
+  render() {
+    return <div className="Error">!</div>;
   }
 }
 
@@ -242,7 +255,7 @@ class Number extends React.Component {
         className={`CellNumber ${this.props.isActive ? "active" : ""} ${
           this.props.isHightlight ? "highlight" : ""
         } ${this.props.isProtected ? "protected" : ""} ${
-          !this.props.isHidden && !this.props.isActive ? "visible" : ""
+          !this.props.isHidden && !this.props.isProtected ? "visible" : ""
         }  ${
           this.props.isActive && this.props.value % 3 === 0
             ? "active-shift-l"
