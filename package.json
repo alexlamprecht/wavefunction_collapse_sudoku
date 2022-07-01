@@ -17,9 +17,7 @@
     "deploy": "gh-pages -d build",
     "start": "CHOKIDAR_USEPOLLING=true react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "watch": "npm-watch"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -34,13 +32,12 @@
       "not op_mini all"
     ],
     "development": [
-      "last 1 chrome version",
       "last 1 firefox version",
+      "last 1 chrome version",
       "last 1 safari version"
     ]
   },
   "devDependencies": {
-    "gh-pages": "^4.0.0",
-    "npm-watch": "^0.0.1"
+    "gh-pages": "^4.0.0"
   }
 }

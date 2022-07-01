@@ -20,7 +20,7 @@ class Board extends Component {
             isActive: parseInt(c) > 0 ? true : false,
             value: parseInt(c),
             isInitial: parseInt(c) > 0 ? true : false,
-            allowedNumbers: [],
+            allowedNumbers: new Set(),
           };
         }),
       };
@@ -73,9 +73,9 @@ class Board extends Component {
       }
     }
 
-    const allowedNumbers = [];
+    const allowedNumbers = new Set();
     for (let index = 1; index <= 9; index++) {
-      if (!foundNumbers.has(index)) allowedNumbers.push(index);
+      if (!foundNumbers.has(index)) allowedNumbers.add(index);
     }
     return allowedNumbers;
   }
@@ -165,84 +165,137 @@ class Cell extends React.Component {
     super(props);
     this.state = {
       isActive: props.isActive,
+      value: props.value,
       number: props.number,
       allowedNumbers: props.allowedNumbers,
     };
     this.handleChange = this.handleChange.bind(this);
+    this.handleClickOnNumber = this.handleClickOnNumber.bind(this);
   }
   static getDerivedStateFromProps(props, current_state) {
     return {
       isActive: props.isActive,
-      number: props.value,
+      value: props.value,
       allowedNumbers: props.allowedNumbers,
     };
   }
 
-  handleChange(e) {
-    if (!this.props.isInitial) {
-      this.props.handleChange(
-        this.props.number,
-        !this.state.isActive,
-        e.target.value
+  handleChange(val) {
+    if (this.props.isActive) {
+      return this.props.handleChange(this.props.number, false, 0);
+    }
+    return this.props.handleChange(this.props.number, true, val);
+  }
+
+  handleClickOnNumber(v) {
+    this.handleChange(v);
+  }
+
+  render() {
+    const numbers = [];
+
+    for (let i = 0; i < 9; i++) {
+      const isActive = this.state.value === i + 1;
+      const isProtected = this.state.value === i + 1 && this.props.isInitial;
+      const isHidden =
+        (this.state.isActive && this.state.value !== i + 1) ||
+        (!this.state.isActive &&
+          this.props.hasHelp &&
+          !this.state.allowedNumbers.has(i + 1));
+      const isHightlight =
+        !isHidden &&
+        this.props.hasHelp &&
+        this.state.allowedNumbers.size === 1 &&
+        this.state.allowedNumbers.has(i + 1);
+      numbers.push(
+        <Number
+          key={`CellNumber-${this.props.number}-${i + 1}`}
+          value={i + 1}
+          isActive={isActive}
+          isProtected={isProtected}
+          isHightlight={isHightlight}
+          isHidden={isHidden}
+          handleClick={this.handleClickOnNumber}
+        ></Number>
       );
+    }
+
+    return <div className={`Cell`}>{numbers}</div>;
+  }
+}
+
+class Number extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick(e) {
+    if (!this.props.isProtected) {
+      this.props.handleClick(this.props.value);
     }
   }
 
-  renderNumber(cellNumber, i) {
+  renderNumber() {
     return (
       <button
-        className={`${
-          this.props.hasHelp && this.state.allowedNumbers.length === 1
-            ? "highlight"
+        className={`CellNumber ${this.props.isActive ? "active" : ""} ${
+          this.props.isHightlight ? "highlight" : ""
+        } ${this.props.isProtected ? "protected" : ""} ${
+          !this.props.isHidden && !this.props.isActive ? "visible" : ""
+        }  ${
+          this.props.isActive && this.props.value % 3 === 0
+            ? "active-shift-l"
+            : ""
+        } ${
+          this.props.isActive && (this.props.value + 2) % 3 === 0
+            ? "active-shift-r"
+            : ""
+        } ${
+          this.props.isActive && this.props.value < 4 ? "active-shift-b" : ""
+        } ${this.props.isActive && this.props.value > 6 ? "active-shift-t" : ""}
+        ${
+          this.props.isActive &&
+          this.props.value < 4 &&
+          (this.props.value + 2) % 3 === 0
+            ? "active-shift-br"
+            : ""
+        }
+        ${
+          this.props.isActive &&
+          this.props.value < 4 &&
+          this.props.value % 3 === 0
+            ? "active-shift-bl"
+            : ""
+        }
+        ${
+          this.props.isActive &&
+          this.props.value > 6 &&
+          (this.props.value + 2) % 3 === 0
+            ? "active-shift-tr"
+            : ""
+        }
+        ${
+          this.props.isActive &&
+          this.props.value > 6 &&
+          this.props.value % 3 === 0
+            ? "active-shift-tl"
             : ""
         }`}
-        key={`CellNumber-${cellNumber}-${i}`}
-        value={i + 1}
-        onClick={this.handleChange}
+        onClick={
+          this.props.isProtected || this.props.isHidden
+            ? () => {}
+            : this.handleClick
+        }
+        value={this.props.value}
       >
-        {i + 1}
+        {this.props.value}
       </button>
     );
   }
 
   render() {
-    if (this.state.isActive) {
-      return (
-        <button
-          className={`Cell Number ${this.state.isActive ? "active" : ""} ${
-            this.props.isInitial ? "initial" : ""
-          }`}
-          value={0}
-          onClick={this.handleChange}
-        >
-          {this.props.value}
-        </button>
-      );
-    }
-    if (this.props.hasHelp && this.state.allowedNumbers.length === 0) {
-      return (
-        <button className={`Cell Error`} value={0}>
-          {"!"}
-        </button>
-      );
-    }
-    const numbers = [];
-    for (let i = 0; i < 9; i++) {
-      if (
-        !this.props.hasHelp ||
-        this.state.allowedNumbers.find((element) => element === i + 1)
-      ) {
-        numbers.push(this.renderNumber(this.props.number, i));
-      } else {
-        numbers.push(<div className="emptyButton"></div>);
-      }
-    }
-
-    return (
-      <div className={`Cell ${this.state.isActive ? "active" : ""} `}>
-        {numbers}
-      </div>
-    );
+    return this.renderNumber();
   }
 }
 
