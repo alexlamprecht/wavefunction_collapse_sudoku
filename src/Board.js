@@ -77,8 +77,8 @@ class Board extends Component {
   }
 
   computeAllowedNumbers(cellNumber, cells) {
-    if (!this.state) {
-      return Array.from({ length: 9 }, (_, i) => i + 1);
+    if (!cells) {
+      return new Set(Array.from({ length: 9 }, (_, i) => i + 1));
     }
     const column = cellNumber % 9;
     const row = Math.floor(cellNumber / 9);
@@ -160,13 +160,16 @@ class Board extends Component {
     });
     const foundAllowedNumbersFreqEqOne = new Set();
     foundAllowedNumbersFreqHor.map((e, i) => {
-      if (e === 1) return foundAllowedNumbersFreqEqOne.add(i);
+      if (e === 1) foundAllowedNumbersFreqEqOne.add(i);
+      return null;
     });
     foundAllowedNumbersFreqVert.map((e, i) => {
-      if (e === 1) return foundAllowedNumbersFreqEqOne.add(i);
+      if (e === 1) foundAllowedNumbersFreqEqOne.add(i);
+      return null;
     });
     foundAllowedNumbersFreqBlock.map((e, i) => {
-      if (e === 1) return foundAllowedNumbersFreqEqOne.add(i);
+      if (e === 1) foundAllowedNumbersFreqEqOne.add(i);
+      return null;
     });
 
     return foundAllowedNumbersFreqEqOne;
@@ -183,6 +186,69 @@ class Board extends Component {
       newCells.push(cell);
     }
     return newCells;
+  }
+
+  solve(steps = 9999) {
+    let cells = this.state.cells;
+    let stepCounter = 0;
+    function isSolved(cells) {
+      for (let i = 0; i < cells.length; i++) {
+        if (!cells[i].isActive) return false;
+      }
+      return true;
+    }
+
+    function hasError(cells) {
+      for (let i = 0; i < cells.length; i++) {
+        if (cells[i].isActive) continue;
+        if (cells[i].allowedNumbers.size === 0) return true;
+      }
+      return false;
+    }
+    function getRandomItem(set) {
+      let items = Array.from(set);
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function findNextOnlyPossible(cells) {
+      let possibleCells = new Set();
+      for (let i = 0; i < cells.length; i++) {
+        if (cells[i].isActive) continue;
+        if (
+          cells[i].allowedNumbers.size === 1 ||
+          cells[i].allowedNumbersFreqEqOne.size === 1
+        ) {
+          possibleCells.add(i);
+        }
+      }
+      if (possibleCells.size > 0) {
+        return getRandomItem(possibleCells);
+      }
+      return false;
+    }
+
+    function solveCell(cells, cellNumber) {
+      let nextVal =
+        cells[cellNumber].allowedNumbersFreqEqOne.values().next().value ||
+        cells[cellNumber].allowedNumbers.values().next().value;
+      // console.log(nextVal);
+      cells[cellNumber].value = nextVal;
+      cells[cellNumber].isActive = true;
+      return cells;
+    }
+
+    while (!isSolved(cells) && stepCounter < steps) {
+      const nextOnlyPossible = findNextOnlyPossible(cells);
+      if (nextOnlyPossible !== false) {
+        let nextCells = solveCell(cells, nextOnlyPossible);
+        nextCells = this.computeAllowedNumbersForAllCells(nextCells);
+        nextCells = this.computeAllowedNumbersFreqForAllCells(nextCells);
+        this.setState({ cells: nextCells });
+      }
+      stepCounter++;
+    }
+    console.log(isSolved(this.state.cells));
+    return isSolved(this.state.cells);
   }
 
   handleChange(cellNumber, activeState, value) {
@@ -269,6 +335,22 @@ class Board extends Component {
             }}
           >
             make initial
+          </button>
+          <button
+            className="UIButton"
+            onClick={(e) => {
+              this.solve(1);
+            }}
+          >
+            solve next
+          </button>
+          <button
+            className="UIButton"
+            onClick={(e) => {
+              this.solve();
+            }}
+          >
+            solve all
           </button>
         </div>
       </div>
