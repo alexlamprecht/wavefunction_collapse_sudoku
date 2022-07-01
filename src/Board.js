@@ -9,6 +9,8 @@ class Board extends Component {
     let randomDataIndex = Math.floor(Math.random() * sudoku.data.length);
     this.randomDataIndex = randomDataIndex;
     this.state = this.initializeboardState(randomDataIndex);
+    this.computeAllowedNumbersForAllCells(this.state.cells);
+    this.computeAllowedNumbersFreqForAllCells(this.state.cells);
     this.state.hasHelp = true;
   }
 
@@ -22,6 +24,7 @@ class Board extends Component {
             value: parseInt(c),
             isInitial: parseInt(c) > 0,
             allowedNumbers: new Set(),
+            allowedNumbersFreqEqOne: new Set(),
           };
         }),
       };
@@ -33,18 +36,47 @@ class Board extends Component {
           value: 0,
           isInitial: false,
           allowedNumbers: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+          allowedNumbersFreqEqOne: new Set(),
         };
       }),
     };
   }
 
-  resetInitialIndex() {
+  loadRandomSudokuFromData() {
     let randomDataIndex = Math.floor(Math.random() * sudoku.data.length);
     this.randomDataIndex = randomDataIndex;
-    this.setState(this.initializeboardState(randomDataIndex));
+    let cells = this.initializeboardState(randomDataIndex).cells;
+    cells = this.computeAllowedNumbersForAllCells(cells);
+    cells = this.computeAllowedNumbersFreqForAllCells(cells);
+    this.setState({ cells: cells });
   }
 
-  computeAllowedNumbers(cellNumber) {
+  resetToInitial() {
+    let cells = this.state.cells;
+    cells.forEach((cell) => {
+      if (!cell.isInitial) {
+        cell.value = 0;
+        cell.isActive = false;
+      }
+    });
+    cells = this.computeAllowedNumbersForAllCells(cells);
+    cells = this.computeAllowedNumbersFreqForAllCells(cells);
+    this.setState({ cells: cells });
+  }
+
+  makeInitial() {
+    let cells = this.state.cells;
+    cells.forEach((cell) => {
+      if (cell.isActive) {
+        cell.isInitial = true;
+      }
+    });
+    cells = this.computeAllowedNumbersForAllCells(cells);
+    cells = this.computeAllowedNumbersFreqForAllCells(cells);
+    this.setState({ cells: cells });
+  }
+
+  computeAllowedNumbers(cellNumber, cells) {
     if (!this.state) {
       return Array.from({ length: 9 }, (_, i) => i + 1);
     }
@@ -56,20 +88,14 @@ class Board extends Component {
     const foundNumbers = new Set();
 
     for (let x = 0; x < 9; x++) {
-      foundNumbers.add(parseInt(this.state.cells[row * 9 + x].value));
-    }
-
-    for (let x = 0; x < 9; x++) {
-      foundNumbers.add(parseInt(this.state.cells[column + 9 * x].value));
+      foundNumbers.add(parseInt(cells[row * 9 + x].value));
+      foundNumbers.add(parseInt(cells[column + 9 * x].value));
     }
 
     for (let x = 0; x < 3; x++) {
       for (let y = 0; y < 3; y++) {
         foundNumbers.add(
-          parseInt(
-            this.state.cells[blockRow * 9 * 3 + blockColumn * 3 + x + 9 * y]
-              .value
-          )
+          parseInt(cells[blockRow * 9 * 3 + blockColumn * 3 + x + 9 * y].value)
         );
       }
     }
@@ -81,6 +107,84 @@ class Board extends Component {
     return allowedNumbers;
   }
 
+  computeAllowedNumbersForAllCells(cells) {
+    const newCells = [];
+    cells.forEach((cell, index) => {
+      cell.allowedNumbers = this.computeAllowedNumbers(index, cells);
+
+      newCells.push(cell);
+    });
+    return newCells;
+  }
+
+  computeAllowedNumbersFreqEqOne(cellNumber, cells) {
+    const foundAllowedNumbersFreqHor = new Array(10).fill(0);
+    const foundAllowedNumbersFreqVert = new Array(10).fill(0);
+    const foundAllowedNumbersFreqBlock = new Array(10).fill(0);
+    if (cells[cellNumber].isActive) return new Set();
+    const column = cellNumber % 9;
+    const row = Math.floor(cellNumber / 9);
+    const blockColumn = Math.floor(column / 3);
+    const blockRow = Math.floor(row / 3);
+
+    cells[cellNumber].allowedNumbers.forEach((an) => {
+      for (let x = 0; x < 9; x++) {
+        let cellIndex = row * 9 + x;
+
+        if (
+          !cells[cellIndex].isActive &&
+          cells[cellIndex].allowedNumbers.has(an)
+        )
+          foundAllowedNumbersFreqHor[an]++;
+
+        cellIndex = column + 9 * x;
+
+        if (
+          !cells[cellIndex].isActive &&
+          cells[cellIndex].allowedNumbers.has(an)
+        )
+          foundAllowedNumbersFreqVert[an]++;
+      }
+
+      for (let x = 0; x < 3; x++) {
+        for (let y = 0; y < 3; y++) {
+          let cellIndex = blockRow * 9 * 3 + blockColumn * 3 + x + 9 * y;
+
+          if (
+            !cells[cellIndex].isActive &&
+            cells[cellIndex].allowedNumbers.has(an)
+          )
+            foundAllowedNumbersFreqBlock[an]++;
+        }
+      }
+    });
+    const foundAllowedNumbersFreqEqOne = new Set();
+    foundAllowedNumbersFreqHor.map((e, i) => {
+      if (e === 1) return foundAllowedNumbersFreqEqOne.add(i);
+    });
+    foundAllowedNumbersFreqVert.map((e, i) => {
+      if (e === 1) return foundAllowedNumbersFreqEqOne.add(i);
+    });
+    foundAllowedNumbersFreqBlock.map((e, i) => {
+      if (e === 1) return foundAllowedNumbersFreqEqOne.add(i);
+    });
+
+    return foundAllowedNumbersFreqEqOne;
+  }
+
+  computeAllowedNumbersFreqForAllCells(cells) {
+    const newCells = [];
+    for (let c = 0; c < cells.length; c++) {
+      let cell = cells[c];
+      cell.allowedNumbersFreqEqOne = this.computeAllowedNumbersFreqEqOne(
+        c,
+        cells
+      );
+      newCells.push(cell);
+    }
+    return newCells;
+  }
+
   handleChange(cellNumber, activeState, value) {
     const updateCells = this.state.cells;
 
@@ -89,6 +193,8 @@ class Board extends Component {
       value,
     };
     this.setState({ cells: updateCells });
+    this.computeAllowedNumbersForAllCells(this.state.cells);
+    this.computeAllowedNumbersFreqForAllCells(this.state.cells);
   }
 
   toggleHelp() {
@@ -96,7 +202,6 @@ class Board extends Component {
   }
 
   renderCell(i) {
-    const allowedNumbers = this.computeAllowedNumbers(i);
     return (
       <Cell
         key={`Cell-${i}`}
@@ -104,7 +209,9 @@ class Board extends Component {
         isActive={this.state.cells[i].isActive}
         isInitial={this.state.cells[i].isInitial}
         value={this.state.cells[i].value}
-        allowedNumbers={allowedNumbers}
+        allowedNumbers={this.state.cells[i].allowedNumbers}
+        allowedNumbersFreqEqOne={this.state.cells[i].allowedNumbersFreqEqOne}
+        // allowedNumbersFreqEqOne
         hasHelp={this.state.hasHelp}
         handleChange={this.handleChange}
       />
@@ -134,7 +241,7 @@ class Board extends Component {
           <button
             className="UIButton"
             onClick={(e) => {
-              this.setState(this.resetInitialIndex());
+              this.loadRandomSudokuFromData();
             }}
           >
             random
@@ -142,7 +249,7 @@ class Board extends Component {
           <button
             className="UIButton"
             onClick={(e) => {
-              this.setState(this.initializeboardState(this.randomDataIndex));
+              this.resetToInitial();
             }}
           >
             reset
@@ -154,6 +261,14 @@ class Board extends Component {
             }}
           >
             empty
+          </button>
+          <button
+            className="UIButton"
+            onClick={(e) => {
+              this.makeInitial();
+            }}
+          >
+            make initial
           </button>
         </div>
       </div>
@@ -169,6 +284,7 @@ class Cell extends React.Component {
       value: props.value,
       number: props.number,
       allowedNumbers: props.allowedNumbers,
+      allowedNumbersFreqEqOne: props.allowedNumbersFreqEqOne,
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleClickOnNumber = this.handleClickOnNumber.bind(this);
@@ -178,6 +294,7 @@ class Cell extends React.Component {
       isActive: props.isActive,
       value: props.value,
       allowedNumbers: props.allowedNumbers,
+      allowedNumbersFreqEqOne: props.allowedNumbersFreqEqOne,
     };
   }
 
@@ -212,8 +329,9 @@ class Cell extends React.Component {
       const isHightlight =
         !isHidden &&
         this.props.hasHelp &&
-        this.state.allowedNumbers.size === 1 &&
-        this.state.allowedNumbers.has(i + 1);
+        this.state.allowedNumbers.has(i + 1) &&
+        (this.state.allowedNumbers.size === 1 ||
+          this.state.allowedNumbersFreqEqOne.has(i + 1));
       numbers.push(
         <Number
           key={`CellNumber-${this.props.number}-${i + 1}`}
