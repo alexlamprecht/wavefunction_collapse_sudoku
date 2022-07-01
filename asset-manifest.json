@@ -1,7 +1,7 @@
 {
   "main.css": "/wavefunction_collapse_sudoku/static/css/main.1a2d83c1.chunk.css",
-  "main.js": "/wavefunction_collapse_sudoku/static/js/main.c9c3a9c6.chunk.js",
-  "main.js.map": "/wavefunction_collapse_sudoku/static/js/main.c9c3a9c6.chunk.js.map",
+  "main.js": "/wavefunction_collapse_sudoku/static/js/main.53330248.chunk.js",
+  "main.js.map": "/wavefunction_collapse_sudoku/static/js/main.53330248.chunk.js.map",
   "static/js/1.0d166939.chunk.js": "/wavefunction_collapse_sudoku/static/js/1.0d166939.chunk.js",
   "static/js/1.0d166939.chunk.js.map": "/wavefunction_collapse_sudoku/static/js/1.0d166939.chunk.js.map",
   "runtime~main.js": "/wavefunction_collapse_sudoku/static/js/runtime~main.06e726d7.js",
@@ -9,6 +9,6 @@
   "static/media/Board.css": "/wavefunction_collapse_sudoku/static/media/noise.5d844735.png",
   "static/css/main.1a2d83c1.chunk.css.map": "/wavefunction_collapse_sudoku/static/css/main.1a2d83c1.chunk.css.map",
   "index.html": "/wavefunction_collapse_sudoku/index.html",
-  "precache-manifest.6e1be1b8827e244625636587da59ac53.js": "/wavefunction_collapse_sudoku/precache-manifest.6e1be1b8827e244625636587da59ac53.js",
+  "precache-manifest.8cb36824f80237e88088d448bcb76fa5.js": "/wavefunction_collapse_sudoku/precache-manifest.8cb36824f80237e88088d448bcb76fa5.js",
   "service-worker.js": "/wavefunction_collapse_sudoku/service-worker.js"
 }
